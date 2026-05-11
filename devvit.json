@@ -1,0 +1,9 @@
+{
+  "name": "airlock-core",
+  "blocks": {
+    "entry": "src/main.tsx"
+  },
+  "dev": {
+    "subreddit": "airlock_core_dev"
+  }
+}
