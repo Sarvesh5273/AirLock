@@ -160,6 +160,25 @@ For a subreddit filtering 20 new users/day: **~9 hours of mod time recovered per
 
 ---
 
+## Roadmap
+
+These features are planned for post-hackathon development:
+
+**Spam Prevention Layer**
+- Cooldown system with exponential backoff for repeat violations
+- Content diff detection: block review requests where nothing meaningful changed
+
+**Mod-Side Diff View**
+Side-by-side comparison of original violation vs user's corrected version directly in the recovery request — so mods see the change, not just the content.
+
+**Dedicated Review Queue UI**
+A custom Devvit dashboard showing all pending Airlock recovery requests in one place, separate from ModMail, with one-click approve/deny actions.
+
+**AutoMod Rule Auto-Detection**
+Instead of manually configuring rule names, Airlock reads the subreddit's AutoMod config and suggests which rules to intercept automatically.
+
+---
+
 ## Technical Notes
 
 **ID Prefixing:** Reddit API methods require the `t3_` prefix, but ModLogs sometimes omit it. Airlock enforces the prefix dynamically: `targetId.startsWith('t3_') ? targetId : 't3_' + targetId`.
@@ -169,6 +188,8 @@ For a subreddit filtering 20 new users/day: **~9 hours of mod time recovered per
 **CSS Constraints:** Devvit `<vstack>` blocks reject standard CSS margin properties. All spacing uses `gap` and `padding` attributes exclusively.
 
 **Deduplication:** Every processed ModLog entry is marked `processed_log:{id} = "true"` before the Sweeper exits. The check runs before any API calls — zero duplicate DMs or comments are possible.
+
+**Duplicate Prevention:** Draft is deleted from KV Store immediately after submission — one recovery request per filtered post, no duplicates possible.
 
 ---
 
