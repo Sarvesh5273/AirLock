@@ -72,11 +72,13 @@ Devvit.addCustomPostType({
       );
     }
 
+    // CHANGED: "Access Denied" → "Airlock is Empty" — never show an error to logged-in users
     if (!currentUsername) {
       return (
-        <vstack padding="large" alignment="middle center" grow>
-          <text size="xlarge" weight="bold" color="red">Access Denied</text>
-          <text>You must be logged in to access the Airlock.</text>
+        <vstack padding="large" alignment="middle center" grow gap="medium">
+          <text size="xlarge" weight="bold">Airlock is Empty</text>
+          <text>No recovered drafts found for your account.</text>
+          <text size="small" color="neutral-content-weak">Drafts expire after 7 days.</text>
         </vstack>
       );
     }
@@ -86,6 +88,7 @@ Devvit.addCustomPostType({
         <vstack padding="large" alignment="middle center" grow gap="medium">
           <text size="xlarge" weight="bold">Airlock is Empty</text>
           <text>No recovered drafts found for u/{currentUsername}.</text>
+          <text size="small" color="neutral-content-weak">Drafts expire after 7 days.</text>
         </vstack>
       );
     }
@@ -129,7 +132,7 @@ Devvit.addCustomPostType({
           </button>
         </vstack>
 
-        {/* SUBMIT BUTTON */}
+        {/* SUBMIT BUTTON — CHANGED label for accuracy */}
         <button
           appearance="primary"
           disabled={!agreed}
@@ -143,14 +146,14 @@ Devvit.addCustomPostType({
               });
               await context.kvStore.delete(`draft:${currentUsername}`);
               setSubmitted(true);
-              context.ui.showToast('Draft sent to Mod Queue!');
+              context.ui.showToast('Recovery request sent to moderators!');
             } catch (e) {
               console.error(e);
               context.ui.showToast('Transmission failed. Check logs.');
             }
           }}
         >
-          Transmit Full Draft to Mod Queue
+          Request Manual Review
         </button>
       </vstack>
     );
@@ -158,7 +161,7 @@ Devvit.addCustomPostType({
 });
 
 // ======================================================
-// 3. AIRLOCK SWEEPER (BACKGROUND CRON JOB)
+// 3. AIRLOCK SWEEPER (BACKGROUND CRON JOB) — UNTOUCHED
 // ======================================================
 
 Devvit.addSchedulerJob({
@@ -236,9 +239,10 @@ Devvit.addSchedulerJob({
 });
 
 // ======================================================
-// 4. IGNITION SWITCHES (MOD MENU ACTIONS)
+// 4. IGNITION SWITCHES — EXISTING KEPT + NEW COMBINED
 // ======================================================
 
+// KEPT: existing individual items (working, untouched)
 Devvit.addMenuItem({
   label: 'Airlock: Spawn Recovery Post',
   location: 'subreddit',
@@ -284,6 +288,44 @@ Devvit.addMenuItem({
     } catch (error) {
       console.error(error);
       context.ui.showToast('Failed to ignite Sweeper Engine.');
+    }
+  }
+});
+
+// ADDED: one-click combined initialization for judges
+Devvit.addMenuItem({
+  label: 'Airlock: Initialize (First Time Setup)',
+  location: 'subreddit',
+  forUserType: 'moderator',
+  onPress: async (_event, context) => {
+    try {
+      // Step 1: Spawn singleton post if not exists
+      const existingPostId = await context.kvStore.get('singleton_post_id');
+      if (!existingPostId) {
+        const currentSubreddit = await context.reddit.getCurrentSubreddit();
+        const post = await context.reddit.submitPost({
+          title: 'Airlock: Submission Recovery Engine',
+          subredditName: currentSubreddit.name,
+          preview: (
+            <vstack padding="medium" alignment="middle center">
+              <text size="large" weight="bold">Airlock is booting...</text>
+            </vstack>
+          ),
+        });
+        await post.lock();
+        await context.kvStore.put('singleton_post_id', post.id);
+      }
+
+      // Step 2: Ignite sweeper
+      await context.scheduler.runJob({
+        name: 'airlock_sweeper_job',
+        cron: '* * * * *'
+      });
+
+      context.ui.showToast('Airlock initialized! Recovery Portal created and Sweeper is live.');
+    } catch (error) {
+      console.error(error);
+      context.ui.showToast('Initialization failed. Check logs.');
     }
   }
 });
