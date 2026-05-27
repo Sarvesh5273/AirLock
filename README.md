@@ -32,7 +32,7 @@ When the user opens the Recovery Portal:
 1. They see **exactly which rule they violated**, extracted from the AutoMod action reason
 2. They see a **preview of their saved draft** (title + truncated body)
 3. They acknowledge the rule violation with a single checkbox
-4. They click **"Transmit Full Draft to Mod Queue"** — which fires a structured ModMail conversation containing their complete, untruncated text directly to the mod team
+4. They click **"Request Manual Review"** — which fires a structured ModMail conversation containing their complete, untruncated text directly to the mod team
 
 The mod sees a clean, pre-organized modmail thread. One click. Done.
 
@@ -93,9 +93,10 @@ When the user submits:
 - The draft is deleted from KV Store (`kvStore.delete`) — no duplicate submissions possible
 
 ### Component D — Ignition Switches (Mod Menu)
-Two mod menu actions handle initialization:
-- **"Airlock: Spawn Recovery Post"** — creates the Singleton, locks it, stores its ID
-- **"Airlock: Ignite Sweeper Engine"** — starts the 60-second cron heartbeat
+Three mod menu actions handle initialization:
+- **"Airlock: Initialize (First Time Setup)"** — one-click setup: creates the Singleton and starts the Sweeper simultaneously
+- **"Airlock: Spawn Recovery Post"** — creates the Singleton only
+- **"Airlock: Ignite Sweeper Engine"** — starts the 60-second cron heartbeat only
 
 ---
 
@@ -124,12 +125,12 @@ draft:{username}           → JSON:
 **Step 1 — Install the app** from the [Devvit App Directory](https://developers.reddit.com/apps/airlock-core).
 
 **Step 2 — Initialize Airlock** via the Mod Menu (three dots → subreddit menu):
-1. Click **"Airlock: Spawn Recovery Post"** — creates and locks the Recovery Portal
-2. Click **"Airlock: Ignite Sweeper Engine (Run Once)"** — starts the background scanner
+- Click **"Airlock: Initialize (First Time Setup)"** — creates the Recovery Portal 
+  and starts the background scanner in one click.
 
-That's it. Airlock is now running.
-
-**Optional:** Configure which AutoMod rule names to intercept via the App Settings panel. Default: `New Account Filter`.
+*Or run individually:*
+- "Airlock: Spawn Recovery Post" — creates the Portal only
+- "Airlock: Ignite Sweeper Engine (Run Once)" — starts the scanner only
 
 ---
 
